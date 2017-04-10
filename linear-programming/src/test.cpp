@@ -1,61 +1,53 @@
 #include "BaseMatrix.h"
 #include <iostream>
 
-void test_baseMatrix() {
-  //来自我出的题目
-  // std::vector<vector<double>> voter = {{-20, +2, -5, -3},
-  //                                      {-20, -8, -2, +5},
-  //                                      {-20, +5, +2, -10},
-  //                                      {-20, -9, -2, +3}};
-  // std::vector<double> aim = {0, 1, 1, 1};
+void test() {
 
-  //来自算法导论
-  std::vector<vector<double>> voter = {
-      {-30, -1, -1, -3}, {-24, -2, -2, -5}, {-36, -4, -1, -2},
-  };
-  std::vector<double> aim = {0, 3, 1, 2};
+  /*ax+bx+cx <= C*/
+  std::vector<vector<double>> voter = {{-30, 2, -8, 5, -9},
+                                       {-15, -5, -2, 2, 0},
+                                       {-26, -3, 5, -10, 3},
+                                       {500, 1, 1, 1, 1}};
+  std::vector<double> aim = {0, 8, 5, 3, 6};
 
-  //算法导论，29.3-6
-  // std::vector<vector<double>> voter = {{-1, -1, -2}, {-2, -2, -1}};
+  //  算法导论，29.3-6.ok
+  // std::vector<vector<double>> voter = {{1, 1, -2}, {2, 2, 1}};
   // std::vector<double> aim = {0, 5, -3};
+
+  //算法导论
+  // vector<vector<double>> voter = {{30, 1, 1, 3}, {24, 2, 2, 5}, {36, 4, 1,
+  // 2}}; vector<double> aim = {0, 3, 1, 2};
 
   BaseMatrix x(voter, aim);
   x.show();
 
-  //测试：最紧约束寻找
-  // std::cout << x.findIndexOfMCC(1) << '\n';
-  // std::cout << x.findIndexOfMCC(2) << '\n';
-  // std::cout << x.findIndexOfMCC(3) << '\n';
-
-  //测试：添加新变量
-  // x.addNewVar(2, 0);
-  // x.addNewVar(2, 1);
-  // x.addNewVar(2, 2);
-  // x.addNewVar(2, 3);
+  // x.changeVar1(6, 1);
+  // x.show();
+  // x.changeVar2(6, 1);
+  // x.show();
+  // x.changeVar3(6, 1);
   // x.show();
 
-  //测试：转动
-  // x.exePotiv(1);
-  // x.show();
-  // x.exePotiv(3);
-  // x.show();
-  // x.exePotiv(2);
+  // x.potive(1);
   // x.show();
 
-  //实践：转化方法
-  try {
-    while (x.canBePivot()) {
-      // cin.get();
-      auto index = x.getIndexOfPotiv();
-      std::cout << "index to change :" << index << '\n';
-      x.exePotiv(index);
-      x.show();
-    }
-  } catch (exception &e) {
-    ;
+  while (x.canBeSolved()) {
+    auto index = x.getNobaseVar();
+    if (index == -1)
+      break;
+    auto flag = x.potive(index);
+    if (!flag)
+      break;
   }
   x.show();
-  std::cout << "max value: " << x.aim[0] << '\n';
+  // std::cout << x.getNobaseVar() << '\n';
+
+  // std::cout << x.getBaseVar(1) << '\n';
+  // std::cout << x.getBaseVar(2) << '\n';
+  // std::cout << x.getBaseVar(3) << '\n';
 }
 
-int main() { test_baseMatrix(); }
+int main(int argc, char const *argv[]) {
+  test();
+  return 0;
+}

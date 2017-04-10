@@ -1,179 +1,158 @@
 #include "BaseMatrix.h"
-#include <cassert>
-#include <exception>
-#include <iomanip>
 #include <iostream>
-#include <vector>
-
-BaseMatrix::BaseMatrix(int m_num, int n_num)
-    : m(m_num), n(n_num), changedVar(vector<bool>(m)) {
-  this->constraints = vector<vector<double>>(n, vector<double>(m + 1));
-  this->aim = vector<double>(m + 1);
-}
 
 BaseMatrix::BaseMatrix(const vector<vector<double>> &matrix,
-                       const vector<double> _aim)
-    : m(_aim.size() - 1), n(matrix.size()), constraints(matrix), aim(_aim),
-      changedVar(vector<bool>(m)) {}
+                       const vector<double> _aim) {
+  /*记录初始变量*/
+  init_vars = vector<int>(_aim.size(), 0);
+  for (int i = 0; i != init_vars.size(); ++i)
+    init_vars[i] = i + 1;
+  /*初始化约束*/
+  for (int i = 0; i != matrix.size(); ++i) {
+    constraints[i + 1 + matrix[0].size() - 1] = map<int, double>();
+    for (int j = 0; j != matrix[i].size(); ++j)
+      constraints[i + 1 + matrix[0].size() - 1][j] = matrix[i][j];
+  }
+  /*初始化目标函数*/
+  for (int i = 0; i != _aim.size(); ++i)
+    aim[i] = _aim[i];
+}
 
 void BaseMatrix::show() {
   std::cout << '\n';
-  for (auto &v : constraints) {
+  for (auto &entry : constraints) {
+    std::cout << entry.first << '\t';
     std::cout << "| ";
-    for (int i = 1; i < v.size(); ++i)
-      std::cout << setw(5) << v[i] << ' ';
-    std::cout << "  |" << v[0] << '\n';
+    for (auto &a : entry.second)
+      std::cout << a.second << "×(" << a.first << ')' << " + ";
+    std::cout << '\n';
   }
-  std::cout << ": ";
-  for (int i = 1; i < aim.size(); ++i) {
-    std::cout << setw(5) << aim[i] << ' ';
+  std::cout << ":\t: ";
+  for (auto &a : aim)
+    std::cout << a.second << "×(" << a.first << ')' << " + ";
+  std::cout << '\n';
+}
+
+bool BaseMatrix::canBeSolved() { return true; }
+
+int BaseMatrix::getBaseVar(int basevar_index) {
+  double max = -1;
+  int nobasevar_index = -1;
+  for (auto &entry : constraints) {
+    if (entry.second[basevar_index] <= 0) /*一个无界的约束*/ {
+      if (max < 0)
+        max = 1000000;
+    } else if (entry.second[0] < 0) { /*约束无法满足*/
+      max = entry.second[0] / entry.second[basevar_index];
+      // if (max < 0)
+      //   max = 1000000;
+    } else {
+      // std::cout << entry.second[0] << " " << entry.second[basevar_index]
+      // << '\n';
+      auto temp = entry.second[0] / entry.second[basevar_index];
+      // std::cout << basevar_index << "  " << entry.second.size() << '\n';
+      if (max < 0 || temp < max) { /*NOTE: 取整判断*/
+        // nobasevar_index = basevar_index + entry.second.size() - 1;
+        nobasevar_index = entry.first;
+        // std::cout << "temp:" << temp << "max:" << max
+        //           << "nobase_index:" << nobasevar_index << '\n';
+        if (NeedIntegerValue)
+          max = int(temp);
+        else
+          max = temp;
+      }
+    }
   }
-  std::cout << "  |" << aim[0] << '\n';
+  return nobasevar_index;
+  // return max;
 }
 
-bool BaseMatrix::setMax(bool flag) {
-  this->IsMax = flag;
-  return this->IsMax;
-}
-
-bool BaseMatrix::setIntegerValue(bool flag) {
-  this->NeedIntegerValue = flag;
-  return this->NeedIntegerValue;
-}
-
-bool BaseMatrix::canBePivot() {
-  for (auto ite = aim.begin() + 1; ite != aim.end(); ++ite) {
-    if (*ite > 0)
-      return true;
-  }
-  return false;
-}
-
-int BaseMatrix::getIndexOfPotiv() {
-  for (auto ite = aim.begin() + 1; ite != aim.end(); ++ite) {
-    if (*ite > 0)
-      return ite - aim.begin();
+int BaseMatrix::getNobaseVar() {
+  for (auto &entry : aim) {
+    if (entry.second > 0 && entry.first != 0)
+      return entry.first;
   }
   return -1;
 }
 
-int BaseMatrix::findIndexOfMCC(int index) {
-  /*NOTE:
-   * 这里的返回值有转意，正常(正数)、值不存在(-2),-1(这个值不知道会什么时候返回)*/
-  int to_return = -1;
-  double min = 100000000;
-  for (int i = 0; i != constraints.size(); ++i) {
-    auto temp = getMaxValue(index, i);
-    std::cout << "index:" << index << " i:" << i << " max:" << temp << '\n';
-    if (temp < 0)
+void BaseMatrix::changeVar1(int basevar, int nobasevar) {
+  auto backup = constraints[basevar];
+  auto to_delete = constraints.find(basevar);
+  constraints.erase(to_delete);
+
+  constraints[nobasevar] = map<int, double>();
+
+  auto base = backup[nobasevar];
+  std::cout << "basevar:" << basevar << " nobasevar:" << nobasevar
+            << " base:" << base << '\n';
+  constraints[nobasevar][0] = backup[0] / base;
+  for (auto &entry : backup) {
+    if (entry.first == 0)
       continue;
-    if (temp < min) {
-      min = temp;
-      to_return = i;
-    }
+    else if (entry.first == nobasevar)
+      constraints[nobasevar][basevar] = 1 / base;
+    // entry.second = 1 / base;
+    else
+      constraints[nobasevar][entry.first] = entry.second / base;
+    // entry.second /= base;
   }
-  std::cout << "min: " << min << " to_return: " << to_return << '\n';
-  if (min == 0)
-    return -2;
-  return to_return;
 }
 
-bool BaseMatrix::exePotiv(int index) {
-  // static vector<vector<double>> con_backup = this->constraints;
-  // static vector<double> aim_backup = this->aim;
-
-  /*转换的源头*/
-  auto potiv_source = findIndexOfMCC(index);
-  /*TODO 接着干！*/
-  addNewVar(index, potiv_source);
-  changeVar(index, potiv_source);
-  changeVar3(index, potiv_source);
-
-  return false;
-}
-
-bool BaseMatrix::addNewVar(int var_index, int con_index) {
-
-  constraints[con_index][0] =
-      -constraints[con_index][0] / constraints[con_index][var_index];
-
-  auto base = constraints[con_index][var_index];
-  for (int i = 1; i != constraints[con_index].size(); ++i) {
-    if (i == var_index) {
-      constraints[con_index][i] = 1 / base;
-    } else {
-      constraints[con_index][i] = -constraints[con_index][i] / base;
-    }
-  }
-  return true;
-}
-
-bool BaseMatrix::changeVar(int var_index, int con_index) {
-  // std::cout << "\n" << '\n';
-  for (int i = 0; i != constraints.size(); ++i) {
-    if (con_index == i)
+void BaseMatrix::changeVar2(int basevar, int nobasevar) {
+  for (auto &entry : constraints) {
+    if (entry.first == nobasevar)
       continue;
     else {
-      // show(i);
-      constraints[i][0] +=
-          constraints[con_index][0] * constraints[i][var_index];
-      /*x是防止覆盖的备份*/
-      auto x = constraints[i];
-      for (int j = 1; j != constraints[i].size(); ++j) {
-        if (j == var_index) {
-          constraints[i][j] = constraints[con_index][var_index] * x[j];
+      auto base = entry.second[nobasevar];
+      /*常数项*/
+      entry.second[0] -= constraints[nobasevar][0] * base;
+      int to_add_key = 0;
+      double to_add_value = 0;
+      auto to_delete = entry.second.find(nobasevar);
+      for (auto &tiny : entry.second) {
+        if (tiny.first == 0) {
+          continue;
         } else {
-          /*NOTE: 这个地方很危险，需要提前推导公式,同时需要注意值覆盖的问题*/
-          // std::cout << "[i][j]:" << x[j] << " [i][var_index]:" <<
-          // x[var_index]
-          //           << " [con_index][j]:" << constraints[con_index][j] <<
-          //           '\n';
-          constraints[i][j] = x[j] + x[var_index] * constraints[con_index][j];
+          if (tiny.first == nobasevar) {
+            to_add_key = basevar;
+            to_add_value = -tiny.second * constraints[nobasevar][basevar];
+          } else {
+            tiny.second -= base * constraints[nobasevar][tiny.first];
+          }
         }
       }
+      entry.second.erase(to_delete);
+      entry.second[to_add_key] = to_add_value;
     }
-    // show(i);
   }
-  // std::cout << "\n" << '\n';
-  return true;
 }
 
-bool BaseMatrix::changeVar3(int var_index, int con_index) {
-  auto base = aim[var_index];
-  aim[0] -= constraints[con_index][0] * base;
-  for (int i = 1; i != aim.size(); ++i) {
-    if (i == var_index) {
-      aim[i] = constraints[con_index][i] * base;
+void BaseMatrix::changeVar3(int basevar, int nobasevar) {
+  /*常数*/
+  aim[0] += aim[nobasevar] * constraints[nobasevar][0];
+  int to_add_key = 0;
+  double to_add_value = 0;
+  auto to_delete = aim.find(nobasevar);
+  for (auto &entry : aim) {
+    if (entry.first == nobasevar) {
+      to_add_key = basevar;
+      to_add_value = -entry.second * constraints[nobasevar][basevar];
+    } else if (entry.first == 0) {
+      continue;
     } else {
-      aim[i] += constraints[con_index][i] * base;
+      entry.second -= aim[nobasevar] * constraints[nobasevar][entry.first];
     }
   }
+  aim.erase(to_delete);
+  aim[to_add_key] = to_add_value;
+}
 
+bool BaseMatrix::potive(int var_index) {
+  auto con_index = getBaseVar(var_index);
+  if (con_index == -1 | con_index == -2)
+    return false;
+  changeVar1(con_index, var_index);
+  changeVar2(con_index, var_index);
+  changeVar3(con_index, var_index);
   return true;
-}
-
-double BaseMatrix::getMaxValue(int var_index, int con_index) {
-  assert(aim[var_index] > 0);
-  if (constraints[con_index][var_index] == 0)
-    return -123456;
-  double max = constraints[con_index][0] / constraints[con_index][var_index];
-  // std::cout << constraints[con_index][0] << " "
-  //           << constraints[con_index][var_index] << " max:" << max << '\n';
-
-  if (NeedIntegerValue) {
-    auto r = int(max);
-    if (r == 0)
-      throw std::exception();
-    return r;
-  } else {
-    if (max == 0)
-      throw std::exception();
-    return max;
-  }
-}
-
-void BaseMatrix::show(int i) {
-  for (int j = 1; j != constraints[i].size(); ++j)
-    std::cout << setw(5) << constraints[i][j] << " ";
-  std::cout << constraints[i][0] << '\n';
 }
