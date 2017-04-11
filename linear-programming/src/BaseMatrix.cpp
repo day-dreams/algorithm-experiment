@@ -33,7 +33,11 @@ void BaseMatrix::show() {
   std::cout << '\n';
 }
 
-bool BaseMatrix::canBeSolved() { return true; }
+bool BaseMatrix::canBeSolved() {
+  auto copy = *this;
+
+  return true;
+}
 
 int BaseMatrix::getBaseVar(int basevar_index) {
   double max = -1;
@@ -83,8 +87,8 @@ void BaseMatrix::changeVar1(int basevar, int nobasevar) {
   constraints[nobasevar] = map<int, double>();
 
   auto base = backup[nobasevar];
-  std::cout << "basevar:" << basevar << " nobasevar:" << nobasevar
-            << " base:" << base << '\n';
+  // std::cout << "basevar:" << basevar << " nobasevar:" << nobasevar
+  //           << " base:" << base << '\n';
   constraints[nobasevar][0] = backup[0] / base;
   for (auto &entry : backup) {
     if (entry.first == 0)
