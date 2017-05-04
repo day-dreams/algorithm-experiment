@@ -4,26 +4,35 @@
 void test() {
 
   /*ax+bx+cx <= C*/
+
+  // github上的例题数据,wrong
   // std::vector<vector<double>> voter = {{-30, 2, -8, 5, -9},
   //                                      {-15, -5, -2, 2, 0},
   //                                      {-26, -3, 5, -10, 3},
   //                                      {500, 1, 1, 1, 1}};
   // std::vector<double> aim = {0, 8, 5, 3, 6};
 
-  //  算法导论，29.3-6.ok
+  //经过修改的github数据,wrong
+  // std::vector<vector<double>> voter = {{-30, -2, -8, 5, -9},
+  //                                      {-15, 1, -2, 3, 0},
+  //                                      {-26, -3, 5, -10, 5},
+  //                                      {500, 1, 1, 1, 1}};
+  // std::vector<double> aim = {0, 6, 5, 2, 4};
+
+  //算法导论，29.3-6.ok
   // std::vector<vector<double>> voter = {{1, 1, -2}, {2, 2, 1}};
   // std::vector<double> aim = {0, 5, -3};
 
-  //算法导论
-  // vector<vector<double>> voter = {{30, 1, 1, 3}, {24, 2, 2, 5}, {36, 4, 1,
-  // 2}}; vector<double> aim = {0, 3, 1, 2};
+  //算法导论,ok
+  vector<vector<double>> voter = {{30, 1, 1, 3}, {24, 2, 2, 5}, {36, 4, 1, 2}};
+  vector<double> aim = {0, 3, 1, 2};
 
-  // zxd的ppt例题
-  vector<vector<double>> voter = {
-      {7, 1, 3, -1, 0, 2, 0},  {-7, -1, -3, 1, 0, -2, 0},
-      {12, 0, -2, 4, 1, 0},    {-12, 0, 2, -4, -1, 0},
-      {10, 0, -4, 3, 0, 8, 1}, {-10, 0, 4, -3, 0, -8, -1}};
-  vector<double> aim = {0, 0, -1, 3, 0, -2, 0};
+  // zxd的ppt例题, ok
+  // vector<vector<double>> voter = {
+  //     {7, 1, 3, -1, 0, 2, 0},  {-7, -1, -3, 1, 0, -2, 0},
+  //     {12, 0, -2, 4, 1, 0},    {-12, 0, 2, -4, -1, 0},
+  //     {10, 0, -4, 3, 0, 8, 1}, {-10, 0, 4, -3, 0, -8, -1}};
+  // vector<double> aim = {0, 0, -1, 3, 0, -2, 0};
 
   BaseMatrix x(voter, aim);
   x.show();

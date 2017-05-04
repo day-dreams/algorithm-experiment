@@ -29,12 +29,9 @@ public:
   /*寻找可以替换的非基本变量;找不到返回-1*/
   int getNobaseVar();
 
-  /*TODO: 替换掉var_index变量，执行替换*/
   bool potive(int var_index);
 
-public:
-  // private:
-  /*TODO: 变量替换的三个步骤*/
+private:
   /*在con_index中改写基本变量和非基本变量的地位*/
   void changeVar1(int basevar, int nobasebar);
   /*改写其他约束中的基本变量和非基本变量*/
