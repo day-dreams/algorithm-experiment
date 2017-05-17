@@ -1,4 +1,7 @@
 
 *.out
 *.txt
+*.pdf
 CMake*
+*/build/
+core
